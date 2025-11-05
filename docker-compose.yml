@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  smtp-server:
+    build: .
+    ports:
+      - "2525:2525"  # SMTP port
+      - "8080:8080"  # API port
+    environment:
+      - SMTP_HOST=0.0.0.0
+      - SMTP_PORT=2525
+      - API_HOST=0.0.0.0
+      - API_PORT=8080
+      - STORAGE_TYPE=memory
+      - MAX_EMAILS=1000
+      - ENABLE_CORS=true
+      - RATE_LIMIT=100
+    volumes:
+      - ./emails.json:/root/emails.json  # Persist emails if using file storage
+    restart: unless-stopped
