@@ -7,6 +7,7 @@
 /bin
 /server
 smtp_server_go
+smtp_server
 
 # Test binary
 *.test
