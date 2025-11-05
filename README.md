@@ -7,6 +7,7 @@ A modern, API-driven SMTP server built with Go. Perfect for development, testing
 ### Core SMTP Features
 - **RFC 5321 Compliant** - Full SMTP protocol implementation
 - **Email Reception** - Receive emails via standard SMTP protocol
+- **Email Sending** - Send emails via Gmail SMTP relay
 - **MIME Parsing** - Parse multipart emails and attachments
 - **TLS/STARTTLS Support** - Secure email transmission
 - **SMTP Authentication** - AUTH PLAIN and LOGIN mechanisms
@@ -93,6 +94,13 @@ MAX_EMAILS=1000          # Maximum emails to store
 ENABLE_AUTH=false        # Require SMTP authentication
 ENABLE_CORS=true         # Enable CORS for API
 RATE_LIMIT=100          # API requests per minute
+
+# Outbound SMTP (for sending emails via Gmail)
+OUTBOUND_SMTP_HOST=smtp.gmail.com
+OUTBOUND_SMTP_PORT=587
+OUTBOUND_SMTP_USERNAME=your-email@gmail.com
+OUTBOUND_SMTP_PASSWORD=your-app-password
+OUTBOUND_SMTP_FROM=your-email@gmail.com
 ```
 
 ## API Documentation
@@ -198,6 +206,33 @@ Request body:
   }
 }
 ```
+
+#### Send Email
+```bash
+POST /api/send
+```
+
+Request body:
+```json
+{
+  "from": "sender@gmail.com",
+  "to": ["recipient@example.com"],
+  "cc": ["cc@example.com"],
+  "bcc": ["bcc@example.com"],
+  "subject": "Test Email",
+  "body": "Plain text content",
+  "html": "<h1>HTML content</h1><p>This is a test email</p>"
+}
+```
+
+Response:
+```json
+{
+  "message": "Email sent successfully"
+}
+```
+
+**Note**: To use this endpoint, configure the outbound SMTP settings in your `.env` file with Gmail credentials.
 
 #### Health Check
 ```bash
@@ -310,6 +345,83 @@ Your webhook will receive POST requests with the email data:
   "body": "Email content...",
   "received_at": "2025-11-05T10:30:00Z"
 }
+```
+
+### Sending Emails
+
+The server can send emails via Gmail's SMTP relay. First, configure your Gmail credentials:
+
+#### Setup Gmail App Password
+
+1. Enable 2-factor authentication on your Gmail account
+2. Go to Google Account → Security → 2-Step Verification → App passwords
+3. Generate an app password for "Mail"
+4. Use this password in your `.env` file
+
+#### Configure Environment Variables
+
+```bash
+OUTBOUND_SMTP_HOST=smtp.gmail.com
+OUTBOUND_SMTP_PORT=587
+OUTBOUND_SMTP_USERNAME=your-email@gmail.com
+OUTBOUND_SMTP_PASSWORD=your-16-char-app-password
+OUTBOUND_SMTP_FROM=your-email@gmail.com
+```
+
+#### Send Email via API
+
+```bash
+curl -X POST http://localhost:8080/api/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": ["recipient@example.com"],
+    "subject": "Hello from SMTP Server",
+    "body": "This is a plain text email",
+    "html": "<h1>Hello!</h1><p>This is an <strong>HTML</strong> email</p>"
+  }'
+```
+
+#### Send with Multiple Recipients
+
+```bash
+curl -X POST http://localhost:8080/api/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": ["recipient1@example.com", "recipient2@example.com"],
+    "cc": ["cc@example.com"],
+    "bcc": ["bcc@example.com"],
+    "subject": "Team Update",
+    "body": "Plain text version",
+    "html": "<h2>Team Update</h2><p>Important announcement</p>"
+  }'
+```
+
+#### Using Python
+
+```python
+import requests
+
+response = requests.post('http://localhost:8080/api/send', json={
+    'to': ['recipient@example.com'],
+    'subject': 'Test Email',
+    'body': 'This is a test email',
+    'html': '<h1>Test</h1><p>This is a test email</p>'
+})
+
+print(response.json())
+```
+
+#### Using JavaScript (Node.js)
+
+```javascript
+const axios = require('axios');
+
+await axios.post('http://localhost:8080/api/send', {
+  to: ['recipient@example.com'],
+  subject: 'Test Email',
+  body: 'This is a test email',
+  html: '<h1>Test</h1><p>This is a test email</p>'
+});
 ```
 
 ## Use Cases
@@ -480,7 +592,7 @@ For issues and questions:
 
 Future enhancements:
 - [ ] Database storage backends (PostgreSQL, MongoDB, Redis)
-- [ ] SMTP relay/forwarding capability
+- [x] SMTP relay/forwarding capability (Gmail SMTP relay implemented)
 - [ ] Advanced email filtering and routing
 - [ ] Web UI for email viewing
 - [ ] Email search functionality
@@ -490,3 +602,4 @@ Future enhancements:
 - [ ] GraphQL API
 - [ ] Metrics and monitoring (Prometheus)
 - [ ] Advanced webhook filtering
+- [ ] Support for attachments in outbound emails

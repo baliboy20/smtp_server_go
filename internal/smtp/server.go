@@ -277,7 +277,7 @@ func (s *smtpSession) handleAuth(line string) error {
 		}
 
 		// Read authentication data
-		authData, err := s.reader.ReadString('\n')
+		_, err := s.reader.ReadString('\n')
 		if err != nil {
 			return err
 		}

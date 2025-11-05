@@ -46,3 +46,15 @@ type Webhook struct {
 	Method string            `json:"method"`
 	Headers map[string]string `json:"headers,omitempty"`
 }
+
+// OutboundEmail represents an email to be sent
+type OutboundEmail struct {
+	From    string            `json:"from,omitempty"`
+	To      []string          `json:"to"`
+	Cc      []string          `json:"cc,omitempty"`
+	Bcc     []string          `json:"bcc,omitempty"`
+	Subject string            `json:"subject"`
+	Body    string            `json:"body,omitempty"`
+	HTML    string            `json:"html,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+}

@@ -22,6 +22,7 @@ type Server struct {
 	config      *config.Config
 	storage     storage.Storage
 	smtpServer  *smtp.Server
+	smtpClient  *smtp.Client
 	router      *mux.Router
 	rateLimiter *rate.Limiter
 }
@@ -32,6 +33,7 @@ func NewServer(cfg *config.Config, store storage.Storage, smtpServer *smtp.Serve
 		config:      cfg,
 		storage:     store,
 		smtpServer:  smtpServer,
+		smtpClient:  smtp.NewClient(cfg),
 		router:      mux.NewRouter(),
 		rateLimiter: rate.NewLimiter(rate.Limit(cfg.RateLimit), cfg.RateLimit*2),
 	}
@@ -56,6 +58,9 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/emails/{id}", s.deleteEmail).Methods("DELETE")
 	api.HandleFunc("/emails", s.clearEmails).Methods("DELETE")
 
+	// Send email endpoint
+	api.HandleFunc("/send", s.sendEmail).Methods("POST")
+
 	// Stats endpoint
 	api.HandleFunc("/stats", s.getStats).Methods("GET")
 
@@ -71,7 +76,7 @@ func (s *Server) setupRoutes() {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf("%s:%s", s.config.APIHost, s.config.APIPort)
 
-	handler := s.router
+	var handler http.Handler = s.router
 	if s.config.EnableCORS {
 		c := cors.New(cors.Options{
 			AllowedOrigins:   []string{"*"},
@@ -183,6 +188,41 @@ func (s *Server) addWebhook(w http.ResponseWriter, r *http.Request) {
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
 		"message": "Webhook added successfully",
+	})
+}
+
+func (s *Server) sendEmail(w http.ResponseWriter, r *http.Request) {
+	var email models.OutboundEmail
+	if err := json.NewDecoder(r.Body).Decode(&email); err != nil {
+		s.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Validate required fields
+	if len(email.To) == 0 {
+		s.respondError(w, http.StatusBadRequest, "At least one recipient is required")
+		return
+	}
+
+	if email.Subject == "" {
+		s.respondError(w, http.StatusBadRequest, "Subject is required")
+		return
+	}
+
+	if email.Body == "" && email.HTML == "" {
+		s.respondError(w, http.StatusBadRequest, "Either body or html is required")
+		return
+	}
+
+	// Send the email
+	if err := s.smtpClient.SendEmail(&email); err != nil {
+		log.Printf("Failed to send email: %v", err)
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to send email: %v", err))
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Email sent successfully",
 	})
 }
 

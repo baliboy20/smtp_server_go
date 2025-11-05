@@ -35,6 +35,13 @@ type Config struct {
 	EnableCORS   bool
 	RateLimit    int // requests per minute
 
+	// Outbound SMTP (for sending emails)
+	OutboundSMTPHost     string
+	OutboundSMTPPort     int
+	OutboundSMTPUsername string
+	OutboundSMTPPassword string
+	OutboundSMTPFrom     string
+
 	// Server
 	ServerStarted time.Time
 }
@@ -63,6 +70,12 @@ func LoadConfig() *Config {
 		EnableAuth:    getBoolEnv("ENABLE_AUTH", false),
 		EnableCORS:    getBoolEnv("ENABLE_CORS", true),
 		RateLimit:     getIntEnv("RATE_LIMIT", 100),
+
+		OutboundSMTPHost:     getEnv("OUTBOUND_SMTP_HOST", "smtp.gmail.com"),
+		OutboundSMTPPort:     getIntEnv("OUTBOUND_SMTP_PORT", 587),
+		OutboundSMTPUsername: getEnv("OUTBOUND_SMTP_USERNAME", ""),
+		OutboundSMTPPassword: getEnv("OUTBOUND_SMTP_PASSWORD", ""),
+		OutboundSMTPFrom:     getEnv("OUTBOUND_SMTP_FROM", ""),
 
 		ServerStarted: time.Now(),
 	}
