@@ -1,0 +1,41 @@
+name: flutter_multi_terminal
+description: A multi-terminal Flutter application for macOS with file system access
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Terminal emulator - renders terminal output and handles ANSI codes
+  xterm: ^4.0.0
+
+  # PTY support - creates pseudo-terminal sessions
+  flutter_pty: ^0.3.0
+
+  # Window management for macOS
+  window_manager: ^0.3.8
+
+  # File system access
+  path_provider: ^2.1.1
+
+  # Icons
+  cupertino_icons: ^1.0.6
+
+  # State management
+  provider: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+# macOS specific configuration
+macos:
+  generate: true
